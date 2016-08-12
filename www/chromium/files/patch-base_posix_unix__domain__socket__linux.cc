@@ -1,6 +1,17 @@
---- base/posix/unix_domain_socket_linux.cc.orig	2016-03-25 13:04:44 UTC
-+++ base/posix/unix_domain_socket_linux.cc
-@@ -23,6 +23,15 @@
+--- base/posix/unix_domain_socket_linux.cc.orig	2016-08-03 15:02:10.000000000 -0400
++++ base/posix/unix_domain_socket_linux.cc	2016-08-08 11:18:08.550899000 -0400
+@@ -5,7 +5,10 @@
+ #include "base/posix/unix_domain_socket_linux.h"
+ 
+ #include <errno.h>
++#include <sys/types.h>
++#include <sys/param.h>
+ #include <sys/socket.h>
++#include <sys/ucred.h>
+ #include <unistd.h>
+ 
+ #include <vector>
+@@ -23,8 +26,25 @@
  
  namespace base {
  
@@ -15,30 +26,26 @@
 +
  const size_t UnixDomainSocket::kMaxFileDescriptors = 16;
  
++#ifndef SCM_CREDENTIALS
++#  define SCM_CREDENTIALS 0x9001
++#endif
++
++#ifndef SO_PASSCRED
++#  define SO_PASSCRED 0x9002
++#endif
++
  #if !defined(OS_NACL_NONSFI)
-@@ -41,7 +50,13 @@ static bool CreateSocketPair(ScopedFD* o
- // static
- bool UnixDomainSocket::EnableReceiveProcessId(int fd) {
-   const int enable = 1;
-+#if defined(__FreeBSD__)
-+  // XXX(rene) do this? :
-+  // taken from dbus, Academic Free License 2.1 / GPL 2+
-+  return 0; // fake OK
-+#else
-   return setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable)) == 0;
-+#endif
- }
- #endif  // !defined(OS_NACL_NONSFI)
- 
-@@ -147,7 +162,11 @@ ssize_t UnixDomainSocket::RecvMsgWithFla
-       // The PNaCl toolchain for Non-SFI binary build does not support
-       // SCM_CREDENTIALS.
-       if (cmsg->cmsg_level == SOL_SOCKET &&
-+#if defined(__FreeBSD__)
-+        1) { // XXX(rene) carpet getting full ...
-+#else
+ // Creates a connected pair of UNIX-domain SOCK_SEQPACKET sockets, and passes
+ // ownership of the newly allocated file descriptors to |one| and |two|.
+@@ -150,7 +170,11 @@
            cmsg->cmsg_type == SCM_CREDENTIALS) {
-+#endif
          DCHECK_EQ(payload_len, sizeof(struct ucred));
          DCHECK_EQ(pid, -1);
++#if defined(OS_BSD)
++        pid = getpid();
++#else
          pid = reinterpret_cast<struct ucred*>(CMSG_DATA(cmsg))->pid;
++#endif
+       }
+ #endif
+     }
