@@ -2,7 +2,7 @@
 # $FreeBSD$
 
 PORTNAME=	chromium
-PORTVERSION=	54.0.2840.71
+PORTVERSION=	54.0.2840.100
 CATEGORIES=	www
 MASTER_SITES=	http://commondatastorage.googleapis.com/chromium-browser-official/
 DISTFILES=	${DISTNAME}${EXTRACT_SUFX} # default, but needed to get distinfo correct if TEST is on
@@ -13,18 +13,20 @@ COMMENT=	Google web browser based on WebKit
 LICENSE=	BSD3CLAUSE LGPL21 MPL
 LICENSE_COMB=	multi
 
-BUILD_DEPENDS=	${LOCALBASE}/bin/gperf:devel/gperf \
-		bash:shells/bash \
-		yasm:devel/yasm \
+BROKEN_FreeBSD_9=does not configure
+
+BUILD_DEPENDS=	bash:shells/bash \
+		python:lang/python \
 		flock:sysutils/flock \
+		gperf:devel/gperf \
+		yasm:devel/yasm \
 		${LOCALBASE}/include/linux/videodev2.h:multimedia/v4l_compat \
 		${LOCALBASE}/share/usbids/usb.ids:misc/usbids \
 		${PYTHON_PKGNAMEPREFIX}Jinja2>0:devel/py-Jinja2 \
 		${PYTHON_PKGNAMEPREFIX}ply>0:devel/py-ply \
 		${PYTHON_PKGNAMEPREFIX}html5lib>0:www/py-html5lib
 
-LIB_DEPENDS=	libasound.so:audio/alsa-lib \
-		libcairo.so:graphics/cairo \
+LIB_DEPENDS=	libcairo.so:graphics/cairo \
 		libcups.so:print/cups \
 		libdbus-1.so:devel/dbus \
 		libdbus-glib-1.so:devel/dbus-glib \
@@ -50,9 +52,7 @@ LIB_DEPENDS=	libasound.so:audio/alsa-lib \
 		libwebp.so:graphics/webp \
 		libxml2.so:textproc/libxml2
 
-RUN_DEPENDS=	${LOCALBASE}/lib/alsa-lib/libasound_module_pcm_oss.so:audio/alsa-plugins \
-		alsa-lib>=1.1.1_1:audio/alsa-lib \
-		droid-fonts-ttf>0:x11-fonts/droid-fonts-ttf \
+RUN_DEPENDS=	droid-fonts-ttf>0:x11-fonts/droid-fonts-ttf \
 		xdg-open:devel/xdg-utils
 
 ONLY_FOR_ARCHS=	i386 amd64
@@ -72,19 +72,17 @@ INSTALLS_ICONS=	yes
 
 # TODO bz@ : install libwidevinecdm.so (see third_party/widevine/cdm/BUILD.gn)
 #
-# Run "./out/${BUILDTYPE}/gn args out/${BUILDTYPE} --list" for all the variables.
+# Run "./out/${BUILDTYPE}/gn args out/${BUILDTYPE} --list" for all variables.
 # Some parts don't have use_system_* flag, and can be turned on/off by using
 # replace_gn_files.py script, some parts just turned on/off for target host
 # OS "target_os == is_bsd", like libusb, libpci.
-GN_ARGS+=	\
+GN_ARGS+=	is_clang=true \
 		clang_use_chrome_plugins=false \
-		enable_hevc_demuxing=true \
 		enable_media_router=true \
 		enable_nacl=false \
 		enable_remoting=false \
 		toolkit_views=true \
 		use_allocator="none" \
-		use_alsa=true \
 		use_aura=true \
 		use_experimental_allocator_shim=true \
 		treat_warnings_as_errors=false \
@@ -106,26 +104,40 @@ GN_ARGS+=	google_api_key="AIzaSyBsp9n41JLW8jCokwn7vhoaMejDFRd1mp8" \
 SUB_FILES=	chromium-browser.desktop chrome
 SUB_LIST+=	COMMENT="${COMMENT}"
 
-OPTIONS_DEFINE=	CODECS GCONF PULSEAUDIO TEST KERBEROS DEBUG DRIVER
+OPTIONS_DEFINE=	CODECS GCONF KERBEROS DRIVER
 CODECS_DESC=	Compile and enable patented codecs like H.264
 DRIVER_DESC=	Install chromedriver
+OPTIONS_GROUP=		AUDIO TESTS
+OPTIONS_GROUP_AUDIO=	ALSA PULSEAUDIO
+OPTIONS_GROUP_TESTS=	DEBUG TEST
 
-OPTIONS_DEFAULT=	CODECS GCONF KERBEROS
-OPTIONS_SUB=	yes
+OPTIONS_DEFAULT=	CODECS GCONF KERBEROS ALSA PULSEAUDIO
+OPTIONS_SUB=		yes
 
 GCONF_USE=	GNOME=gconf2
+ALSA_LIB_DEPENDS=	libasound.so:audio/alsa-lib
+ALSA_RUN_DEPENDS=	${LOCALBASE}/lib/alsa-lib/libasound_module_pcm_oss.so:audio/alsa-plugins \
+			alsa-lib>=1.1.1_1:audio/alsa-lib
 PULSEAUDIO_LIB_DEPENDS=	libpulse.so:audio/pulseaudio
 DRIVER_MAKE_ARGS=chromedriver
 TEST_DISTFILES=	${PORTNAME}-${DISTVERSION}-testdata${EXTRACT_SUFX}
 
 .include <bsd.port.options.mk>
 
+.if ${PORT_OPTIONS:MALSA}
+GN_ARGS+=	use_alsa=true
+.else
+GN_ARGS+=	use_alsa=false
+.endif
+
 .if ${PORT_OPTIONS:MCODECS}
 GN_ARGS+=	ffmpeg_branding="Chrome"
 GN_ARGS+=	proprietary_codecs=true
+GN_ARGS+=	enable_hevc_demuxing=true
 .else
 GN_ARGS+=	ffmpeg_branding="Chromium"
 GN_ARGS+=	proprietary_codecs=false
+GN_ARGS+=	enable_hevc_demuxing=false
 .endif
 
 .if ${PORT_OPTIONS:MGCONF}
@@ -153,37 +165,38 @@ GN_BOOTSTRAP_FLAGS+=	--debug
 #GN_ARGS+=	is_component_build = true
 .else
 BUILDTYPE=	Release
+.if ${ARCH} == amd64
 GN_ARGS+=	use_lld=true # harder, better, faster, stronger
+.endif
 GN_ARGS+=	is_debug=false
 GN_ARGS+=	symbol_level=0
 GN_ARGS+=	remove_webcore_debug_symbols=true
 .endif
 
-MAKE_ENV+=	BUILDTYPE=${BUILDTYPE} \
-		GPERF="${LOCALBASE}/bin/gperf"
-
 .include <bsd.port.pre.mk>
 
-.if ${CHOSEN_COMPILER_TYPE} == gcc
-GN_ARGS+=	gcc_version=${CXX:S/g++//}
-EXTRA_PATCHES+=	${FILESDIR}/extra-patch-gcc
-.else
+.if ${OSVERSION} < 1200017
 BUILD_DEPENDS+=	clang39:devel/llvm39
 CC=		clang39
 CXX=		clang++39
-# /usr/local/include unlike gcc isn't clang's default
+.endif
+#optionally set AR, LD, NM, READELF ?
+
+# TODO: -isystem, would be just as ugly as this approach, but more reliably
+# build would fail without C_INCLUDE_PATH/CPLUS_INCLUDE_PATH env var set.
 MAKE_ENV+=	C_INCLUDE_PATH=${LOCALBASE}/include \
 		CPLUS_INCLUDE_PATH=${LOCALBASE}/include
-GN_ARGS+=	is_clang=true
+# TODO: move this big extra to small ones
 EXTRA_PATCHES+=	${FILESDIR}/extra-patch-clang
-.endif
 
 .if ${OSVERSION} < 1100000
 EXTRA_PATCHES+=	${FILESDIR}/extra-patch-10
 .endif
 
-.if ! ${PORT_OPTIONS:MKERBEROS}
+.if ${PORT_OPTIONS:MKERBEROS}
 GN_ARGS+=	use_kerberos=true
+.else
+GN_ARGS+=	use_kerberos=false
 .endif
 
 pre-everything::
@@ -211,7 +224,8 @@ pre-configure:
 
 do-configure:
 	# GN generator bootstrapping and generating ninja files
-	cd ${WRKSRC} && ${SETENV} CC=${CC} CXX=${CXX} ${PYTHON_CMD} \
+	cd ${WRKSRC} && ${SETENV} CC=${CC} CXX=${CXX} LD=${CXX} \
+		READELF=${READELF} AR=${AR} NM=${NM} ${PYTHON_CMD} \
 		./tools/gn/bootstrap/bootstrap.py ${GN_BOOTSTRAP_FLAGS}
 	cd ${WRKSRC} && ${SETENV} ./out/${BUILDTYPE}/gn \
 		gen --args='${GN_ARGS}' out/${BUILDTYPE}
