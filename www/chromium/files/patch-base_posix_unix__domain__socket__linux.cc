@@ -1,17 +1,6 @@
---- base/posix/unix_domain_socket_linux.cc.orig	2016-08-03 15:02:10.000000000 -0400
-+++ base/posix/unix_domain_socket_linux.cc	2016-08-08 11:18:08.550899000 -0400
-@@ -5,7 +5,10 @@
- #include "base/posix/unix_domain_socket_linux.h"
- 
- #include <errno.h>
-+#include <sys/types.h>
-+#include <sys/param.h>
- #include <sys/socket.h>
-+#include <sys/ucred.h>
- #include <unistd.h>
- 
- #include <vector>
-@@ -23,8 +26,25 @@
+--- base/posix/unix_domain_socket_linux.cc.orig	2017-04-19 19:06:28 UTC
++++ base/posix/unix_domain_socket_linux.cc
+@@ -23,6 +23,15 @@
  
  namespace base {
  
@@ -26,12 +15,30 @@
 +
  const size_t UnixDomainSocket::kMaxFileDescriptors = 16;
  
-+#ifndef SCM_CREDENTIALS
-+#  define SCM_CREDENTIALS 0x9001
+ #if !defined(OS_NACL_NONSFI)
+@@ -40,8 +49,14 @@ static bool CreateSocketPair(ScopedFD* o
+ 
+ // static
+ bool UnixDomainSocket::EnableReceiveProcessId(int fd) {
++#if defined(OS_BSD)
++  // XXX(rene) do this? :
++  // taken from dbus, Academic Free License 2.1 / GPL 2+
++  return 0; // fake OK
++#else
+   const int enable = 1;
+   return setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable)) == 0;
 +#endif
-+
-+#ifndef SO_PASSCRED
-+#  define SO_PASSCRED 0x9002
+ }
+ #endif  // !defined(OS_NACL_NONSFI)
+ 
+@@ -147,7 +162,11 @@ ssize_t UnixDomainSocket::RecvMsgWithFla
+       // The PNaCl toolchain for Non-SFI binary build does not support
+       // SCM_CREDENTIALS.
+       if (cmsg->cmsg_level == SOL_SOCKET &&
++#if defined(OS_BSD)
++        1) { // XXX(rene) carpet getting full ...
++#else
+           cmsg->cmsg_type == SCM_CREDENTIALS) {
 +#endif
 +
  #if !defined(OS_NACL_NONSFI)

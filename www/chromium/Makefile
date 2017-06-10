@@ -1,8 +1,13 @@
 # Created by: Florent Thoumie <flz@FreeBSD.org>
-# $FreeBSD$
+# $FreeBSD: head/www/chromium/Makefile 441138 2017-05-18 10:10:36Z cpm $
 
 PORTNAME=	chromium
+<<<<<<< HEAD
 PORTVERSION=	56.0.2924.87
+=======
+PORTVERSION=	58.0.3029.110
+PORTREVISION=	1
+>>>>>>> 21871a00c2722106ea664da31e916dc288473a22
 CATEGORIES=	www
 MASTER_SITES=	http://commondatastorage.googleapis.com/chromium-browser-official/
 DISTFILES=	${DISTNAME}${EXTRACT_SUFX} # default, but needed to get distinfo correct if TEST is on
@@ -13,46 +18,50 @@ COMMENT=	Google web browser based on WebKit
 LICENSE=	BSD3CLAUSE LGPL21 MPL
 LICENSE_COMB=	multi
 
-BUILD_DEPENDS=	bash:shells/bash \
-		clang39:devel/llvm39 \
-		python:lang/python \
-		flock:sysutils/flock \
-		gperf:devel/gperf \
+BUILD_DEPENDS=	gperf:devel/gperf \
+		clang40:devel/llvm40 \
 		yasm:devel/yasm \
+		python:lang/python \
+		ffmpeg>=3.2.2,1:multimedia/ffmpeg \
+		bash:shells/bash \
+		flock:sysutils/flock \
+		node:www/node \
 		${LOCALBASE}/include/linux/videodev2.h:multimedia/v4l_compat \
 		${LOCALBASE}/share/usbids/usb.ids:misc/usbids \
 		${PYTHON_PKGNAMEPREFIX}Jinja2>0:devel/py-Jinja2 \
 		${PYTHON_PKGNAMEPREFIX}ply>0:devel/py-ply \
 		${PYTHON_PKGNAMEPREFIX}html5lib>0:www/py-html5lib
 
-LIB_DEPENDS=	libcairo.so:graphics/cairo \
-		libcups.so:print/cups \
+LIB_DEPENDS=	libspeechd.so:accessibility/speech-dispatcher \
+		libsnappy.so:archivers/snappy \
+		libFLAC.so:audio/flac \
+		libspeex.so:audio/speex \
 		libdbus-1.so:devel/dbus \
 		libdbus-glib-1.so:devel/dbus-glib \
-		libdrm.so:graphics/libdrm \
-		libexpat.so:textproc/expat2 \
-		libFLAC.so:audio/flac \
-		libfreetype.so:print/freetype2 \
-		libgnome-keyring.so:security/libgnome-keyring \
-		libharfbuzz.so:print/harfbuzz \
-		libexif.so:graphics/libexif \
-		libfontconfig.so:x11-fonts/fontconfig \
-		libgcrypt.so:security/libgcrypt \
 		libicuuc.so:devel/icu \
 		libjsoncpp.so:devel/jsoncpp \
-		libnspr4.so:devel/nspr \
-		libnss3.so:security/nss \
 		libpci.so:devel/libpci \
-		libpng.so:graphics/png \
+		libnspr4.so:devel/nspr \
 		libre2.so:devel/re2 \
-		libsnappy.so:archivers/snappy \
-		libspeechd.so:accessibility/speech-dispatcher \
-		libspeex.so:audio/speex \
+		libcairo.so:graphics/cairo \
+		libdrm.so:graphics/libdrm \
+		libexif.so:graphics/libexif \
+		libpng.so:graphics/png \
 		libwebp.so:graphics/webp \
-		libxml2.so:textproc/libxml2
+		libavcodec.so:multimedia/ffmpeg \
+		libcups.so:print/cups \
+		libfreetype.so:print/freetype2 \
+		libharfbuzz.so:print/harfbuzz \
+		libharfbuzz-icu.so:print/harfbuzz-icu \
+		libgcrypt.so:security/libgcrypt \
+		libgnome-keyring.so:security/libgnome-keyring \
+		libnss3.so:security/nss \
+		libexpat.so:textproc/expat2 \
+		libxml2.so:textproc/libxml2 \
+		libfontconfig.so:x11-fonts/fontconfig
 
-RUN_DEPENDS=	droid-fonts-ttf>0:x11-fonts/droid-fonts-ttf \
-		xdg-open:devel/xdg-utils
+RUN_DEPENDS=	xdg-open:devel/xdg-utils \
+		droid-fonts-ttf>0:x11-fonts/droid-fonts-ttf
 
 ONLY_FOR_ARCHS=	i386 amd64
 USES=		compiler bison cpe desktop-file-utils execinfo jpeg \
@@ -63,7 +72,7 @@ CPE_PRODUCT=	chrome
 USE_PERL5=	build
 USE_XORG=	scrnsaverproto x11 xcb xcomposite xcursor xext xdamage xfixes xi \
 		xproto xrandr xrender xscrnsaver xtst
-USE_GNOME=	atk glib20 gtk20 dconf libxslt libxml2
+USE_GNOME=	atk glib20 gtk20 gtk30 dconf libxslt libxml2
 MAKE_ARGS=	-C out/${BUILDTYPE}
 SHEBANG_FILES=	chrome/tools/build/linux/chrome-wrapper
 ALL_TARGET=	chrome
@@ -79,11 +88,15 @@ GN_ARGS+=	is_clang=true \
 		clang_use_chrome_plugins=false \
 		enable_media_router=true \
 		enable_nacl=false \
+		enable_one_click_signin=true \
 		enable_remoting=false \
+		enable_webrtc=false \
+		fieldtrial_testing_like_official_build=true \
 		toolkit_views=true \
 		use_allocator="none" \
 		use_aura=true \
-		use_experimental_allocator_shim=true \
+		use_cups=true \
+		use_experimental_allocator_shim=false \
 		treat_warnings_as_errors=false \
 		use_sysroot=false \
 		use_system_libjpeg=true \
@@ -110,7 +123,7 @@ OPTIONS_GROUP=		AUDIO TESTS
 OPTIONS_GROUP_AUDIO=	ALSA PULSEAUDIO
 OPTIONS_GROUP_TESTS=	DEBUG TEST
 
-OPTIONS_DEFAULT=	CODECS GCONF KERBEROS ALSA PULSEAUDIO
+OPTIONS_DEFAULT=	ALSA CODECS DRIVER GCONF KERBEROS
 OPTIONS_SUB=		yes
 
 GCONF_USE=	GNOME=gconf2
@@ -180,8 +193,8 @@ ALL_TARGET+=	${TEST_TARGETS}
 
 .include <bsd.port.pre.mk>
 
-CC=		clang39
-CXX=		clang++39
+CC=		clang40
+CXX=		clang++40
 #optionally set AR, LD, NM, READELF ?
 
 # TODO: -isystem, would be just as ugly as this approach, but more reliably
@@ -191,16 +204,9 @@ MAKE_ENV+=	C_INCLUDE_PATH=${LOCALBASE}/include \
 # TODO: move this big extra to small ones
 EXTRA_PATCHES+=	${FILESDIR}/extra-patch-clang
 
-.if ${OPSYS} == FreeBSD
-.if ${OSVERSION} < 1100000
-EXTRA_PATCHES+=	${FILESDIR}/extra-patch-10
-.endif
-
-.if ${OSVERSION} >= 1200017 || (${OSVERSION} >= 1100508 && ${OSVERSION} < 1200000)
-EXTRA_PATCHES+=	${FILESDIR}/extra-patch-libc++-new
-.else
-EXTRA_PATCHES+=	${FILESDIR}/extra-patch-libc++-old
-.endif
+# Work around base r261801
+.if ${OPSYS} == FreeBSD && ${OSVERSION} < 1100508
+GN_ARGS+=	extra_cxxflags="-D_LIBCPP_TRIVIAL_PAIR_COPY_CTOR=1"
 .endif
 
 pre-everything::
@@ -213,9 +219,6 @@ pre-everything::
 	@${ECHO_MSG} "and a fair amount of free diskspace (~ 3.7GB)."
 .endif
 	@${ECHO_MSG}
-	@${ECHO_MSG} "Make sure you have Python build with the SEM option ON"
-	@${ECHO_MSG} "(default in python27-2.7.8 since r361735)"
-	@${ECHO_MSG}
 
 pre-configure:
 	# We used to remove bundled libraries to be sure that chromium uses
@@ -224,7 +227,7 @@ pre-configure:
 	#./build/linux/unbundle/remove_bundled_libraries.py [list of preserved]
 	cd ${WRKSRC} && ${PYTHON_CMD} \
 		./build/linux/unbundle/replace_gn_files.py --system-libraries \
-		flac harfbuzz-ng libwebp libxml libxslt snappy yasm || ${FALSE}
+		ffmpeg flac harfbuzz-ng libwebp libxml libxslt snappy yasm || ${FALSE}
 
 do-configure:
 	# GN generator bootstrapping and generating ninja files
@@ -233,6 +236,10 @@ do-configure:
 		./tools/gn/bootstrap/bootstrap.py ${GN_BOOTSTRAP_FLAGS}
 	cd ${WRKSRC} && ${SETENV} ./out/${BUILDTYPE}/gn \
 		gen --args='${GN_ARGS}' out/${BUILDTYPE}
+
+	# Setup nodejs dependency
+	@${MKDIR} ${WRKSRC}/third_party/node/linux/node-linux-x64/bin
+	${LN} -sf ${LOCALBASE}/bin/node ${WRKSRC}/third_party/node/linux/node-linux-x64/bin/node
 
 test regression-test: build
 .for t in ${TEST_TARGETS}
@@ -243,6 +250,10 @@ test regression-test: build
 do-install:
 	@${MKDIR} ${STAGEDIR}${DATADIR}
 	${INSTALL_MAN} ${WRKSRC}/out/${BUILDTYPE}/chrome.1 ${STAGEDIR}${MANPREFIX}/man/man1
+.for t in font_service test_ime_driver ui
+	${INSTALL_DATA} ${WRKSRC}/out/${BUILDTYPE}/${t}.service \
+		${STAGEDIR}${DATADIR}
+.endfor
 .for s in 22 24 48 64 128 256
 	@${MKDIR} ${STAGEDIR}${PREFIX}/share/icons/hicolor/${s}x${s}/apps
 	${INSTALL_DATA} ${WRKSRC}/chrome/app/theme/chromium/product_logo_${s}.png \
@@ -250,11 +261,13 @@ do-install:
 .endfor
 	${INSTALL_SCRIPT} ${WRKSRC}/chrome/tools/build/linux/chrome-wrapper \
 		${STAGEDIR}${DATADIR}
-.for p in chrome_100_percent chrome_200_percent keyboard_resources resources
+.for p in chrome_100_percent chrome_200_percent headless_lib keyboard_resources \
+	resources mus_app_resources_100 mus_app_resources_200 mus_app_resources_strings \
+	views_mus_resources
 	${INSTALL_DATA} ${WRKSRC}/out/${BUILDTYPE}/${p}.pak \
 		${STAGEDIR}${DATADIR}
 .endfor
-.for d in icudtl.dat natives_blob.bin
+.for d in icudtl.dat natives_blob.bin snapshot_blob.bin
 	${INSTALL_DATA} ${WRKSRC}/out/${BUILDTYPE}/${d} ${STAGEDIR}${DATADIR}
 .endfor
 	${INSTALL_PROGRAM} ${WRKSRC}/out/${BUILDTYPE}/chrome \

@@ -1,4 +1,4 @@
---- net/dns/dns_config_service_posix_unittest.cc.orig	2016-12-12 22:12:11 UTC
+--- net/dns/dns_config_service_posix_unittest.cc.orig	2017-04-19 19:06:36 UTC
 +++ net/dns/dns_config_service_posix_unittest.cc
 @@ -2,8 +2,6 @@
  // Use of this source code is governed by a BSD-style license that can be

@@ -1,4 +1,4 @@
---- third_party/WebKit/Source/wtf/ThreadingPthreads.cpp.orig	2016-12-13 00:19:49 UTC
+--- third_party/WebKit/Source/wtf/ThreadingPthreads.cpp.orig	2017-04-19 19:06:50 UTC
 +++ third_party/WebKit/Source/wtf/ThreadingPthreads.cpp
 @@ -49,11 +49,15 @@
  #include <objc/objc-auto.h>
@@ -18,7 +18,7 @@
  #include <unistd.h>
  #endif
  
-@@ -91,6 +95,8 @@ ThreadIdentifier currentThread() {
+@@ -66,6 +70,8 @@ ThreadIdentifier currentThreadSyscall() 
    return pthread_mach_thread_np(pthread_self());
  #elif OS(LINUX)
    return syscall(__NR_gettid);

@@ -1,28 +1,27 @@
---- content/browser/BUILD.gn.orig	2016-12-01 23:02:12.000000000 +0000
-+++ content/browser/BUILD.gn	2016-12-14 14:34:21.739126000 +0000
-@@ -1399,6 +1399,12 @@
+--- content/browser/BUILD.gn.orig	2017-04-19 19:06:33 UTC
++++ content/browser/BUILD.gn
+@@ -1464,11 +1464,6 @@ source_set("browser") {
+       "memory/memory_monitor_chromeos.cc",
+       "memory/memory_monitor_chromeos.h",
      ]
+-  } else {
+-    sources += [
+-      "memory/memory_monitor_linux.cc",
+-      "memory/memory_monitor_linux.h",
+-    ]
    }
  
-+  if (is_bsd) {
-+    sources -= [
-+      "download/quarantine_linux.cc",
-+    ]
-+  }
-+
    if (!is_win) {
+@@ -1540,7 +1535,7 @@ source_set("browser") {
+ 
+   # Desktop screen capture implementations, conditionally built depending on
+   # the available implementations for each platform.
+-  if (is_linux || is_mac || is_win) {
++  if (is_linux || is_bsd || is_mac || is_win) {
+     defines += [ "ENABLE_SCREEN_CAPTURE=1" ]
      sources += [
-       "file_descriptor_info_impl.cc",
-@@ -1462,7 +1468,7 @@
-     if (!is_ios) {
-       defines += [ "ENABLE_SCREEN_CAPTURE=1" ]
-     }
--    if (is_linux || is_mac || is_win) {
-+    if (is_linux || is_bsd || is_mac || is_win) {
-       sources += [
-         "media/capture/desktop_capture_device.cc",
-         "media/capture/desktop_capture_device.h",
-@@ -1629,7 +1635,7 @@
+       "media/capture/cursor_renderer.cc",
+@@ -1727,7 +1722,7 @@ source_set("browser") {
      }
    }
  
@@ -31,7 +30,7 @@
      deps += [ "//build/linux:fontconfig" ]
    }
  
-@@ -1782,6 +1788,17 @@
+@@ -1880,6 +1875,17 @@ source_set("browser") {
        "//chromeos",
        "//chromeos:power_manager_proto",
      ]
@@ -48,9 +47,9 @@
 +    ]
    }
  
-   if (use_aura) {
-@@ -1899,11 +1916,11 @@
-     deps += [ "//third_party/flac" ]
+   if (enable_mojo_media) {
+@@ -1998,11 +2004,11 @@ source_set("browser") {
+     ]
    }
  
 -  if (is_linux && use_dbus) {

@@ -1,6 +1,6 @@
---- third_party/WebKit/Source/platform/fonts/FontCache.cpp.orig	2016-12-13 00:43:16 UTC
+--- third_party/WebKit/Source/platform/fonts/FontCache.cpp.orig	2017-04-19 19:06:50 UTC
 +++ third_party/WebKit/Source/platform/fonts/FontCache.cpp
-@@ -61,9 +61,9 @@ using namespace WTF;
+@@ -63,9 +63,9 @@ using namespace WTF;
  
  namespace blink {
  

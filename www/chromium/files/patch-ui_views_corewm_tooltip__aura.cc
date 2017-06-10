@@ -1,6 +1,6 @@
---- ui/views/corewm/tooltip_aura.cc.orig	2016-12-16 15:15:24.020369000 +0000
-+++ ui/views/corewm/tooltip_aura.cc	2016-12-16 15:16:03.296431000 +0000
-@@ -34,7 +34,7 @@
+--- ui/views/corewm/tooltip_aura.cc.orig	2017-04-19 19:06:54 UTC
++++ ui/views/corewm/tooltip_aura.cc
+@@ -34,7 +34,7 @@ const int kCursorOffsetY = 15;
  
  // TODO(varkha): Update if native widget can be transparent on Linux.
  bool CanUseTranslucentTooltipWidget() {

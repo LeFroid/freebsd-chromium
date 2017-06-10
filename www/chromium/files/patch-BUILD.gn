@@ -1,6 +1,6 @@
---- BUILD.gn.orig	2016-12-01 23:02:04 UTC
+--- BUILD.gn.orig	2017-04-19 19:06:27 UTC
 +++ BUILD.gn
-@@ -215,7 +215,7 @@ group("both_gn_and_gyp") {
+@@ -220,7 +220,7 @@ group("both_gn_and_gyp") {
      ]
    }
  
@@ -9,7 +9,7 @@
      deps += [
        "//chrome",
        "//chrome/test:browser_tests",
-@@ -274,7 +274,7 @@ group("both_gn_and_gyp") {
+@@ -277,7 +277,7 @@ group("both_gn_and_gyp") {
      ]
    }
  
@@ -18,7 +18,7 @@
      # TODO(GYP): Figure out which of these should actually build on iOS,
      # and whether there should be other targets that are iOS-only and missing.
      deps += [
-@@ -316,7 +316,7 @@ group("both_gn_and_gyp") {
+@@ -322,7 +322,7 @@ group("both_gn_and_gyp") {
        "//ui/touch_selection:ui_touch_selection_unittests",
        "//url/ipc:url_ipc_unittests",
      ]
@@ -27,7 +27,7 @@
      deps += [ "//ios:all" ]
    }
  
-@@ -474,7 +474,7 @@ group("both_gn_and_gyp") {
+@@ -482,7 +482,7 @@ group("both_gn_and_gyp") {
      ]
    }
  
@@ -36,7 +36,7 @@
      # The following are definitely linux-only.
      deps += [
        "//chrome:manpage",
-@@ -501,9 +501,16 @@ group("both_gn_and_gyp") {
+@@ -505,9 +505,16 @@ group("both_gn_and_gyp") {
        # TODO(dpranke): add the linux_dump_symbols flag?
        deps += [ "//chrome:linux_symbols" ]
      }
@@ -54,7 +54,7 @@
      deps += [
        "//base:base_i18n_perftests",
        "//base:base_perftests",
-@@ -574,7 +581,7 @@ group("both_gn_and_gyp") {
+@@ -578,7 +585,7 @@ group("both_gn_and_gyp") {
      if (enable_nacl) {
        deps += [ "//components/nacl/loader:nacl_loader_unittests" ]
  
@@ -63,7 +63,7 @@
          # TODO(dpranke): Figure out what platforms should actually have this.
          deps += [ "//components/nacl/loader:nacl_helper" ]
  
-@@ -688,7 +695,7 @@ group("both_gn_and_gyp") {
+@@ -684,7 +691,7 @@ group("both_gn_and_gyp") {
        deps +=
            [ "//chrome/installer/mini_installer:next_version_mini_installer" ]
      }
@@ -72,17 +72,17 @@
      deps += [ "//breakpad:symupload($host_toolchain)" ]
    }
  
-@@ -736,7 +743,7 @@ group("gn_only") {
-     ]
+@@ -728,7 +735,7 @@ group("gn_only") {
+     deps += [ "//components/proximity_auth:proximity_auth_unittests" ]
    }
  
 -  if (is_win || is_linux) {
 +  if (is_win || is_linux || is_bsd) {
      deps += [
        "//mash:all",
-       "//media/mojo/services:media_mojo_shell_unittests",
-@@ -749,7 +756,7 @@ group("gn_only") {
-     ]
+       "//media/mojo/services:media_service_unittests",
+@@ -754,7 +761,7 @@ group("gn_only") {
+     }
    }
  
 -  if (is_linux && !is_chromeos && !is_chromecast) {
@@ -90,8 +90,8 @@
      # TODO(GYP): Figure out if any of these should be in gn_all
      # and figure out how cross-platform they are
      deps += [
-@@ -816,7 +823,7 @@ group("gn_only") {
-     ]
+@@ -794,7 +801,7 @@ group("gn_only") {
+     }
  
      if (target_cpu == "x86" || target_cpu == "x64") {
 -      if (!is_android) {
@@ -99,7 +99,7 @@
          deps += [ "//chrome/test:load_library_perf_tests" ]
        }
        deps += [
-@@ -824,7 +831,7 @@ group("gn_only") {
+@@ -802,7 +809,7 @@ group("gn_only") {
          "//third_party/libjpeg_turbo:simd_asm",
        ]
      }
@@ -108,7 +108,7 @@
        deps += [ "//v8:v8_shell" ]
      }
    }
-@@ -834,7 +841,7 @@ group("gn_only") {
+@@ -812,7 +819,7 @@ group("gn_only") {
    }
  
    if ((is_linux && !is_chromeos && !is_chromecast) || (is_win && use_drfuzz) ||
@@ -117,7 +117,7 @@
      deps += [
        "//testing/libfuzzer/fuzzers",
        "//testing/libfuzzer/tests:libfuzzer_tests",
-@@ -876,7 +883,7 @@ group("gn_only") {
+@@ -844,7 +851,7 @@ group("gn_only") {
  
  group("gn_mojo_targets") {
    testonly = true
@@ -126,7 +126,7 @@
      # TODO(GYP): Figure out if any of these should be in gn_all
      # and figure out how cross-platform they are
      deps = [
-@@ -901,7 +908,7 @@ group("gn_visibility") {
+@@ -870,7 +877,7 @@ group("gn_visibility") {
    }
  }
  
@@ -136,15 +136,24 @@
    # including running the layout tests (see below).
    group("blink_tests") {
 @@ -935,7 +942,7 @@ if (!is_ios) {
-       ]
+       data_deps += [ "//content/shell:content_shell_crash_service" ]
      }
  
 -    if (!is_win && !is_android) {
 +    if (!is_win && !is_android && !is_bsd) {
-       deps += [ "//breakpad:minidump_stackwalk($host_toolchain)" ]
+       data_deps += [ "//breakpad:minidump_stackwalk($host_toolchain)" ]
      }
  
-@@ -961,7 +968,7 @@ group("chromium_swarm_tests") {
+@@ -943,7 +950,7 @@ if (!is_ios) {
+       data_deps += [ "//breakpad:dump_syms($host_toolchain)" ]
+     }
+ 
+-    if (is_linux) {
++    if (is_linux && !is_bsd) {
+       data_deps += [ "//breakpad:dump_syms($host_toolchain)" ]
+     }
+ 
+@@ -979,7 +986,7 @@ group("chromium_swarm_tests") {
  group("chromium_builder_perf") {
    testonly = true
  
@@ -153,9 +162,9 @@
      data_deps = [
        "//cc:cc_perftests",
        "//chrome/test:load_library_perf_tests",
-@@ -992,7 +999,7 @@ group("chromium_builder_perf") {
+@@ -1009,7 +1016,7 @@ group("chromium_builder_perf") {
          "//chrome/installer/mini_installer:mini_installer",
-         "//third_party/angle/src/tests:angle_perftests",
+         "//chrome/test:angle_perftests",
        ]
 -    } else {
 +    } else if (!is_bsd) {
